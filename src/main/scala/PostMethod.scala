@@ -1,7 +1,7 @@
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.headers.{`Access-Control-Allow-Headers`, `Access-Control-Allow-Methods`, `Access-Control-Allow-Origin`}
-import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpMethods, HttpResponse}
+import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpMethods, HttpProtocols, HttpResponse, StatusCodes}
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.stream.Materializer
@@ -29,7 +29,7 @@ object PostMethod extends App{
   }
 
 
-  val route : Route = {
+  val stringRoute : Route = {
     corsHandler{
       path("endpoint") {
         post {
@@ -53,8 +53,29 @@ object PostMethod extends App{
     }
   }
 
+  val jsonRoute : Route = {
+    corsHandler{
+      path("postCard") {
+        entity(as[String]){ requestBody =>
+          complete{
+            val responseBody = s"post recibido -> $requestBody"
+            val requestBodyFuture = Future(requestBody)
+            requestBodyFuture.onComplete{
+              case Success(result) => println(s"request body: $result")
+              case Failure(exception) => println(s"error: $exception")
+            }
+            HttpResponse(StatusCodes.OK,Nil,entity = HttpEntity(ContentTypes.`text/plain(UTF-8)`,responseBody))
+          }
+
+        }
+      }
+    }
+  }
+
+  implicit val routes: Route = stringRoute ~ jsonRoute
+
   // Iniciar el servidor HTTP
-  val bindingFuture = Http().newServerAt("localhost", port).bind(route)
+  val bindingFuture = Http().newServerAt("localhost", port).bind(routes)
   println(s"Servidor iniciado en http://localhost:$port/")
 
   // Esperar hasta que se presione CTRL + C para terminar
