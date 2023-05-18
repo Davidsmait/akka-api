@@ -9,13 +9,15 @@ import akka.stream.ActorMaterializer
 import scala.concurrent.{ExecutionContextExecutor, Future}
 import scala.io.StdIn
 
-object Main extends App {
+object GetMethodJson extends App {
 
 
 
   implicit val system: ActorSystem = ActorSystem("my-system")
   implicit val materializer: ActorMaterializer = ActorMaterializer()
   implicit val executionContext: ExecutionContextExecutor = system.dispatcher
+
+  val port = 8080
 
   val route: Route = path("hello") {
     get{
@@ -30,9 +32,9 @@ object Main extends App {
     }
   }
 
-  val bindingFuture = Http().bindAndHandle(route, "localhost", 8080)
+  val bindingFuture = Http().bindAndHandle(route, "localhost", port)
 
-  println(s"Server online at http://localhost:8080/\nPress RETURN to stop...")
+  println(s"Server online at http://localhost:$port/\nPress RETURN to stop...")
   StdIn.readLine()
 
   bindingFuture
